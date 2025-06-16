@@ -7,8 +7,8 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     // --- Configuración de la Conexión a la Base de Datos ---
-    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=HotelDB;encrypt=false;trustServerCertificate=true;";
-    private static final String USER = "sa";
+    private static final String DB_URL = "jdbc:sqlserver://CHARLIEVIRUS\\SQLEXPRESS;databaseName=HotelDB;encrypt=false;trustServerCertificate=true;";
+    private static final String USER = "HotelDB";
     private static final String PASS = "12345";
 
     /**
