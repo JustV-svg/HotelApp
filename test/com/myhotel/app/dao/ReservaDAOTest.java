@@ -11,7 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
-import java.time.LocalDate; // Para usar LocalDate
+import java.time.LocalDate;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -22,11 +22,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ReservaDAOTest {
 
     private ReservaDAO reservaDAO;
-    private HuespedDAO huespedDAO; // Necesario para gestionar los huéspedes
-    private HabitacionDAO habitacionDAO; // Necesario para gestionar las habitaciones
+    private HuespedDAO huespedDAO;
+    private HabitacionDAO habitacionDAO;
 
-    private int huespedIdTemp; // Para almacenar el ID del huésped temporal
-    private int habitacionIdTemp; // Para almacenar el ID de la habitación temporal
+    private int huespedIdTemp;
+    private int habitacionIdTemp;
 
     @BeforeEach
     void setUp() {
@@ -36,18 +36,19 @@ public class ReservaDAOTest {
 
         try (Connection connection = DatabaseConnection.getConnection();
              Statement stmt = connection.createStatement()) {
-            // Eliminar en el orden correcto para evitar problemas de Foreign Key
             stmt.executeUpdate("DELETE FROM Reservas");
             stmt.executeUpdate("DELETE FROM Huespedes");
             stmt.executeUpdate("DELETE FROM Habitaciones");
 
-            // Insertar un huésped y una habitación temporales para las pruebas de reserva
+            // Insertar un huésped temporal para las pruebas de reserva
             Huesped tempHuesped = new Huesped(0, "HuespedTest", "ApellidoTest", "00000000Z", "111111111", "test@example.com");
             huespedDAO.insertarHuesped(tempHuesped);
             huespedIdTemp = tempHuesped.getHuespedID();
             assertNotEquals(0, huespedIdTemp, "Debe generar ID de Huesped temporal");
 
-            Habitacion tempHabitacion = new Habitacion(0, "999", "Simple", new BigDecimal("100.00"), "Disponible");
+            // Insertar una habitación temporal para las pruebas de reserva
+            // CAMBIO: "Disponible" (String) a true (boolean)
+            Habitacion tempHabitacion = new Habitacion(0, "999", "Simple", new BigDecimal("100.00"), true);
             habitacionDAO.insertarHabitacion(tempHabitacion);
             habitacionIdTemp = tempHabitacion.getHabitacionID();
             assertNotEquals(0, habitacionIdTemp, "Debe generar ID de Habitacion temporal");
@@ -61,7 +62,6 @@ public class ReservaDAOTest {
     void tearDown() {
         try (Connection connection = DatabaseConnection.getConnection();
              Statement stmt = connection.createStatement()) {
-            // Limpiar en el orden correcto
             stmt.executeUpdate("DELETE FROM Reservas");
             stmt.executeUpdate("DELETE FROM Huespedes");
             stmt.executeUpdate("DELETE FROM Habitaciones");
@@ -90,6 +90,7 @@ public class ReservaDAOTest {
         assertEquals(fechaEntrada, reservaRecuperada.getFechaEntrada());
         assertEquals(fechaSalida, reservaRecuperada.getFechaSalida());
         assertEquals(costoTotal, reservaRecuperada.getCostoTotal());
+        assertEquals("Activa", reservaRecuperada.getEstadoReserva()); // Verificar el estado de la reserva
         System.out.println("testInsertarReserva completado.");
     }
 
@@ -107,6 +108,7 @@ public class ReservaDAOTest {
         assertNotNull(reservaRecuperada, "Debería recuperarse una reserva por ID.");
         assertEquals(reservaParaObtener.getHuespedID(), reservaRecuperada.getHuespedID());
         assertEquals(reservaParaObtener.getFechaEntrada(), reservaRecuperada.getFechaEntrada());
+        assertEquals("Pendiente", reservaRecuperada.getEstadoReserva()); // Verificar el estado
         System.out.println("testObtenerReservaPorID completado.");
     }
 
@@ -162,6 +164,7 @@ public class ReservaDAOTest {
         LocalDate fecha3 = LocalDate.now().plusDays(6);
         LocalDate fecha4 = LocalDate.now().plusDays(8);
 
+        // CAMBIO: true (boolean) en lugar de "Disponible" (String)
         reservaDAO.insertarReserva(new Reserva(0, huespedIdTemp, habitacionIdTemp, fecha1, fecha2, new BigDecimal("100.00"), "Activa"));
         reservaDAO.insertarReserva(new Reserva(0, huespedIdTemp, habitacionIdTemp, fecha3, fecha4, new BigDecimal("200.00"), "Pendiente"));
 

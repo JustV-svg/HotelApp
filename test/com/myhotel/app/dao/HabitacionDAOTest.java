@@ -1,12 +1,13 @@
 package com.myhotel.app.dao;
 
+
 import dao.DatabaseConnection;
 import dao.HabitacionDAO;
 import model.Habitacion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.math.BigDecimal; // Necesario para el tipo BigDecimal
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -26,13 +27,21 @@ public class HabitacionDAOTest {
             connection = DatabaseConnection.getConnection();
             Statement stmt = connection.createStatement();
             // Limpiar primero Reservas si tienes Foreign Key Constraints
+            // Asegúrate de que esta tabla exista y sea correcta
             stmt.executeUpdate("DELETE FROM Reservas");
-            stmt.executeUpdate("DELETE FROM Habitaciones"); // Limpiar la tabla Habitaciones
+            // Limpiar la tabla Habitaciones
+            stmt.executeUpdate("DELETE FROM Habitaciones");
             DatabaseConnection.closeConnection(stmt);
         } catch (SQLException e) {
             fail("Fallo en setUp: No se pudo limpiar la base de datos para la prueba: " + e.getMessage());
         } finally {
-            DatabaseConnection.closeConnection(connection);
+            // Asegúrate de que connection se cierre SOLO si se abrió aquí
+            // Si DatabaseConnection.getConnection() devuelve una conexión nueva cada vez, esto es correcto
+            // Pero si es un singleton o pool, la gestión puede ser diferente.
+            // Para tests, usualmente se quiere una conexión fresca o limpiar al inicio y final.
+            if (connection != null) {
+                DatabaseConnection.closeConnection(connection);
+            }
         }
     }
 
@@ -47,14 +56,17 @@ public class HabitacionDAOTest {
         } catch (SQLException e) {
             System.err.println("Advertencia en tearDown: No se pudo limpiar la base de datos después de la prueba: " + e.getMessage());
         } finally {
-            DatabaseConnection.closeConnection(connection);
+            if (connection != null) {
+                DatabaseConnection.closeConnection(connection);
+            }
         }
     }
 
     @Test
     void testInsertarHabitacion() {
         System.out.println("Ejecutando testInsertarHabitacion...");
-        Habitacion nuevaHabitacion = new Habitacion(0, "101", "Doble", new BigDecimal("150.00"), "Disponible");
+        // CAMBIO: "Disponible" (String) a true (boolean)
+        Habitacion nuevaHabitacion = new Habitacion(0, "101", "Doble", new BigDecimal("150.00"), true);
         boolean insertado = habitacionDAO.insertarHabitacion(nuevaHabitacion);
 
         assertTrue(insertado, "La habitación debería haber sido insertada correctamente.");
@@ -65,13 +77,16 @@ public class HabitacionDAOTest {
         assertEquals("101", habitacionRecuperada.getNumero());
         assertEquals("Doble", habitacionRecuperada.getTipo());
         assertEquals(new BigDecimal("150.00"), habitacionRecuperada.getPrecioPorNoche());
+        // CAMBIO: Verificar isDisponible() en lugar de getEstado()
+        assertTrue(habitacionRecuperada.isDisponible(), "La habitación recuperada debería estar disponible.");
         System.out.println("testInsertarHabitacion completado.");
     }
 
     @Test
     void testObtenerHabitacionPorID() {
         System.out.println("Ejecutando testObtenerHabitacionPorID...");
-        Habitacion habitacionParaObtener = new Habitacion(0, "205", "Suite", new BigDecimal("300.00"), "Ocupada");
+        // CAMBIO: "Ocupada" (String) a false (boolean)
+        Habitacion habitacionParaObtener = new Habitacion(0, "205", "Suite", new BigDecimal("300.00"), false);
         habitacionDAO.insertarHabitacion(habitacionParaObtener);
         assertNotEquals(0, habitacionParaObtener.getHabitacionID(), "La habitación debe tener un ID generado.");
 
@@ -79,18 +94,22 @@ public class HabitacionDAOTest {
         assertNotNull(habitacionRecuperada, "Debería recuperarse una habitación por ID.");
         assertEquals(habitacionParaObtener.getNumero(), habitacionRecuperada.getNumero());
         assertEquals(habitacionParaObtener.getTipo(), habitacionRecuperada.getTipo());
+        // CAMBIO: Verificar isDisponible()
+        assertFalse(habitacionRecuperada.isDisponible(), "La habitación recuperada debería estar ocupada.");
         System.out.println("testObtenerHabitacionPorID completado.");
     }
 
     @Test
     void testActualizarHabitacion() {
         System.out.println("Ejecutando testActualizarHabitacion...");
-        Habitacion habitacionOriginal = new Habitacion(0, "301", "Individual", new BigDecimal("80.00"), "Disponible");
+        // CAMBIO: "Disponible" (String) a true (boolean)
+        Habitacion habitacionOriginal = new Habitacion(0, "301", "Individual", new BigDecimal("80.00"), true);
         habitacionDAO.insertarHabitacion(habitacionOriginal);
         assertNotEquals(0, habitacionOriginal.getHabitacionID());
 
         habitacionOriginal.setPrecioPorNoche(new BigDecimal("90.00"));
-        habitacionOriginal.setEstado("En Limpieza");
+        // CAMBIO: setEstado("En Limpieza") a setDisponible(false)
+        habitacionOriginal.setDisponible(false);
         boolean actualizado = habitacionDAO.actualizarHabitacion(habitacionOriginal);
 
         assertTrue(actualizado, "La habitación debería haber sido actualizada.");
@@ -98,14 +117,16 @@ public class HabitacionDAOTest {
         Habitacion habitacionActualizada = habitacionDAO.obtenerHabitacionPorID(habitacionOriginal.getHabitacionID());
         assertNotNull(habitacionActualizada);
         assertEquals(new BigDecimal("90.00"), habitacionActualizada.getPrecioPorNoche());
-        assertEquals("En Limpieza", habitacionActualizada.getEstado());
+        // CAMBIO: Verificar isDisponible() en lugar de getEstado()
+        assertFalse(habitacionActualizada.isDisponible(), "La habitación actualizada debería estar no disponible.");
         System.out.println("testActualizarHabitacion completado.");
     }
 
     @Test
     void testEliminarHabitacion() {
         System.out.println("Ejecutando testEliminarHabitacion...");
-        Habitacion habitacionParaEliminar = new Habitacion(0, "404", "Doble", new BigDecimal("160.00"), "Disponible");
+        // CAMBIO: "Disponible" (String) a true (boolean)
+        Habitacion habitacionParaEliminar = new Habitacion(0, "404", "Doble", new BigDecimal("160.00"), true);
         habitacionDAO.insertarHabitacion(habitacionParaEliminar);
         assertNotEquals(0, habitacionParaEliminar.getHabitacionID());
 
@@ -123,12 +144,18 @@ public class HabitacionDAOTest {
         List<Habitacion> habitacionesIniciales = habitacionDAO.obtenerTodasLasHabitaciones();
         assertTrue(habitacionesIniciales.isEmpty(), "La lista de habitaciones debería estar vacía al inicio del test.");
 
-        habitacionDAO.insertarHabitacion(new Habitacion(0, "501", "Suite Ejecutiva", new BigDecimal("400.00"), "Disponible"));
-        habitacionDAO.insertarHabitacion(new Habitacion(0, "502", "Suite Ejecutiva", new BigDecimal("400.00"), "Ocupada"));
+        // CAMBIO: "Disponible" (String) a true (boolean)
+        habitacionDAO.insertarHabitacion(new Habitacion(0, "501", "Suite Ejecutiva", new BigDecimal("400.00"), true));
+        // CAMBIO: "Ocupada" (String) a false (boolean)
+        habitacionDAO.insertarHabitacion(new Habitacion(0, "502", "Suite Ejecutiva", new BigDecimal("400.00"), false));
 
         List<Habitacion> todasLasHabitaciones = habitacionDAO.obtenerTodasLasHabitaciones();
         assertFalse(todasLasHabitaciones.isEmpty(), "La lista de habitaciones no debería estar vacía.");
         assertEquals(2, todasLasHabitaciones.size(), "Debería haber 2 habitaciones en la lista.");
+
+        // Este test de verificación de disponibilidad no lo tenías antes, pero es bueno añadirlo
+        assertTrue(todasLasHabitaciones.stream().anyMatch(h -> h.getNumero().equals("501") && h.isDisponible()), "La habitación 501 debería estar disponible.");
+        assertTrue(todasLasHabitaciones.stream().anyMatch(h -> h.getNumero().equals("502") && !h.isDisponible()), "La habitación 502 debería estar no disponible.");
 
         boolean habitacion501Found = todasLasHabitaciones.stream().anyMatch(h -> h.getNumero().equals("501"));
         assertTrue(habitacion501Found, "La habitación 501 debería estar en la lista.");

@@ -9,20 +9,23 @@ import java.math.BigDecimal; // Importar BigDecimal
 public class HabitacionDAO {
 
     public boolean insertarHabitacion(Habitacion habitacion) {
-        String sql = "INSERT INTO Habitaciones (Numero, Tipo, PrecioPorNoche, Estado) VALUES (?, ?, ?, ?)";
+        // CAMBIO: 'Estado' a 'Disponible' en la sentencia SQL
+        String sql = "INSERT INTO Habitaciones (Numero, Tipo, PrecioPorNoche, Disponible) VALUES (?, ?, ?, ?)";
         Connection conn = null;
         PreparedStatement pstmt = null;
+        ResultSet generatedKeys = null; // Declarar ResultSet aquí para el finally
         try {
             conn = DatabaseConnection.getConnection();
             pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setString(1, habitacion.getNumero());
             pstmt.setString(2, habitacion.getTipo());
-            pstmt.setBigDecimal(3, habitacion.getPrecioPorNoche()); // Usar setBigDecimal
-            pstmt.setString(4, habitacion.getEstado());
+            pstmt.setBigDecimal(3, habitacion.getPrecioPorNoche());
+            // CAMBIO: habitacion.getEstado() a habitacion.isDisponible() y setString a setBoolean
+            pstmt.setBoolean(4, habitacion.isDisponible());
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
-                ResultSet generatedKeys = pstmt.getGeneratedKeys();
+                generatedKeys = pstmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     habitacion.setHabitacionID(generatedKeys.getInt(1));
                 }
@@ -30,7 +33,9 @@ public class HabitacionDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error al insertar habitación: " + e.getMessage());
+            e.printStackTrace(); // Imprimir el stack trace para mejor depuración
         } finally {
+            DatabaseConnection.closeConnection(generatedKeys); // Cerrar ResultSet
             DatabaseConnection.closeConnection(pstmt);
             DatabaseConnection.closeConnection(conn);
         }
@@ -38,7 +43,8 @@ public class HabitacionDAO {
     }
 
     public Habitacion obtenerHabitacionPorID(int habitacionID) {
-        String sql = "SELECT HabitacionID, Numero, Tipo, PrecioPorNoche, Estado FROM Habitaciones WHERE HabitacionID = ?";
+        // CAMBIO: 'Estado' a 'Disponible' en la sentencia SQL
+        String sql = "SELECT HabitacionID, Numero, Tipo, PrecioPorNoche, Disponible FROM Habitaciones WHERE HabitacionID = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -53,12 +59,14 @@ public class HabitacionDAO {
                         rs.getInt("HabitacionID"),
                         rs.getString("Numero"),
                         rs.getString("Tipo"),
-                        rs.getBigDecimal("PrecioPorNoche"), // Usar getBigDecimal
-                        rs.getString("Estado")
+                        rs.getBigDecimal("PrecioPorNoche"),
+                        // CAMBIO: rs.getString("Estado") a rs.getBoolean("Disponible")
+                        rs.getBoolean("Disponible")
                 );
             }
         } catch (SQLException e) {
             System.err.println("Error al obtener habitación por ID: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             DatabaseConnection.closeConnection(rs);
             DatabaseConnection.closeConnection(pstmt);
@@ -69,7 +77,8 @@ public class HabitacionDAO {
 
     public List<Habitacion> obtenerTodasLasHabitaciones() {
         List<Habitacion> habitaciones = new ArrayList<>();
-        String sql = "SELECT HabitacionID, Numero, Tipo, PrecioPorNoche, Estado FROM Habitaciones";
+        // CAMBIO: 'Estado' a 'Disponible' en la sentencia SQL
+        String sql = "SELECT HabitacionID, Numero, Tipo, PrecioPorNoche, Disponible FROM Habitaciones";
         Connection conn = null;
         Statement stmt = null;
         ResultSet rs = null;
@@ -84,12 +93,14 @@ public class HabitacionDAO {
                         rs.getString("Numero"),
                         rs.getString("Tipo"),
                         rs.getBigDecimal("PrecioPorNoche"),
-                        rs.getString("Estado")
+                        // CAMBIO: rs.getString("Estado") a rs.getBoolean("Disponible")
+                        rs.getBoolean("Disponible")
                 );
                 habitaciones.add(habitacion);
             }
         } catch (SQLException e) {
             System.err.println("Error al obtener todas las habitaciones: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             DatabaseConnection.closeConnection(rs);
             DatabaseConnection.closeConnection(stmt);
@@ -99,7 +110,8 @@ public class HabitacionDAO {
     }
 
     public boolean actualizarHabitacion(Habitacion habitacion) {
-        String sql = "UPDATE Habitaciones SET Numero = ?, Tipo = ?, PrecioPorNoche = ?, Estado = ? WHERE HabitacionID = ?";
+        // CAMBIO: 'Estado' a 'Disponible' en la sentencia SQL
+        String sql = "UPDATE Habitaciones SET Numero = ?, Tipo = ?, PrecioPorNoche = ?, Disponible = ? WHERE HabitacionID = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
         try {
@@ -108,13 +120,15 @@ public class HabitacionDAO {
             pstmt.setString(1, habitacion.getNumero());
             pstmt.setString(2, habitacion.getTipo());
             pstmt.setBigDecimal(3, habitacion.getPrecioPorNoche());
-            pstmt.setString(4, habitacion.getEstado());
+            // CAMBIO: habitacion.getEstado() a habitacion.isDisponible() y setString a setBoolean
+            pstmt.setBoolean(4, habitacion.isDisponible());
             pstmt.setInt(5, habitacion.getHabitacionID());
 
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Error al actualizar habitación: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             DatabaseConnection.closeConnection(pstmt);
             DatabaseConnection.closeConnection(conn);
@@ -135,6 +149,7 @@ public class HabitacionDAO {
             return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Error al eliminar habitación: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             DatabaseConnection.closeConnection(pstmt);
             DatabaseConnection.closeConnection(conn);

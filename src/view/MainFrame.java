@@ -2,51 +2,59 @@ package view;
 
 import controller.HuespedController;
 import dao.HuespedDAO;
+import controller.HabitacionController; // <-- Importar HabitacionController
+import dao.HabitacionDAO; // <-- Importar HabitacionDAO
+
 import javax.swing.*;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
-    private JPanel mainPanel; // El panel raíz del MainFrame.form
-    private JTabbedPane tabbedPane1; // El JTabbedPane que creaste
+    private JPanel mainPanel;
+    private JTabbedPane tabbedPane1;
 
+    // Declarar paneles y controladores para Huesped
     private HuespedPanel huespedPanel;
     private HuespedController huespedController;
     private HuespedDAO huespedDAO;
 
+    // Declarar paneles y controladores para Habitacion (NUEVOS)
+    private HabitacionPanel habitacionPanel;
+    private HabitacionController habitacionController;
+    private HabitacionDAO habitacionDAO;
+
     public MainFrame() {
         setTitle("Sistema de Gestión Hotelera");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setContentPane(mainPanel); // Establece el panel generado por el UI Designer
-        setSize(900, 700); // Un tamaño un poco más grande para empezar
+        setContentPane(mainPanel); // Establece el panel raíz de MainFrame.form
+        setSize(900, 700);
         setLocationRelativeTo(null);
         setVisible(true);
 
-        // Inicializar el DAO de Huéspedes
+        // Inicialización de DAOs
         huespedDAO = new HuespedDAO();
+        habitacionDAO = new HabitacionDAO(); // <-- Inicializar HabitacionDAO
 
-        // Inicializar el panel de Huéspedes y su controlador
+        // Inicialización de paneles y controladores
         huespedPanel = new HuespedPanel();
         huespedController = new HuespedController(huespedPanel, huespedDAO);
 
-        // Enlazar el panel de Huéspedes a la primera pestaña (índice 0)
-        // Asegúrate de que esta pestaña tenga el título "Huéspedes" en el diseñador
-        // Ojo: Si el UI Designer ya creó pestañas vacías, esto las reemplaza.
-        // Si no hay pestañas creadas en el .form, usa addTab
-        if (tabbedPane1.getTabCount() > 0 && tabbedPane1.getTitleAt(0).equals("Huéspedes")) {
-            tabbedPane1.setComponentAt(0, huespedPanel.getMainPanel());
-        } else {
-            tabbedPane1.addTab("Huéspedes", huespedPanel.getMainPanel());
-        }
-        // Puedes eliminar las otras pestañas vacías si no las necesitas aún o dejar que el código las añada.
-        // Si el UI Designer ya creó "Habitaciones" y "Reservas", no necesitas estas líneas:
-        // tabbedPane1.addTab("Habitaciones", new JPanel());
-        // tabbedPane1.addTab("Reservas", new JPanel());
+        habitacionPanel = new HabitacionPanel(); // <-- Inicializar HabitacionPanel
+        habitacionController = new HabitacionController(habitacionPanel, habitacionDAO); // <-- Inicializar HabitacionController
 
-        // Si tienes problemas para que se vean bien las pestañas, lo más sencillo es:
-        // 1. En el MainFrame.form, elimina todas las pestañas del JTabbedPane.
-        // 2. Y luego en MainFrame.java, usa solo estas líneas:
-        // tabbedPane1.addTab("Huéspedes", huespedPanel.getMainPanel());
-        // tabbedPane1.addTab("Habitaciones", new JPanel()); // Placeholder
-        // tabbedPane1.addTab("Reservas", new JPanel());    // Placeholder
+        // Configuración de las pestañas en el JTabbedPane
+        // Opcional: Elimina todas las pestañas existentes si el diseñador las creó vacías.
+        // Esto asegura que las pestañas se generen siempre con nuestros paneles y no haya duplicados o paneles vacíos.
+        tabbedPane1.removeAll(); // <-- Limpia todas las pestañas pre-existentes
+
+        tabbedPane1.addTab("Huéspedes", huespedPanel.getMainPanel()); // Añade la pestaña de Huéspedes
+        tabbedPane1.addTab("Habitaciones", habitacionPanel.getMainPanel()); // <-- Añade la pestaña de Habitaciones
+        tabbedPane1.addTab("Reservas", new JPanel()); // Placeholder para Reservas, un JPanel vacío por ahora
+    }
+
+    // Método main para iniciar la aplicación
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new MainFrame();
+        });
     }
 }

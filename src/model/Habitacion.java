@@ -1,4 +1,5 @@
 package model;
+
 import java.math.BigDecimal; // Importa para usar BigDecimal
 
 public class Habitacion {
@@ -6,17 +7,19 @@ public class Habitacion {
     private String numero;
     private String tipo;
     private BigDecimal precioPorNoche; // Se esta usando BigDecimal para precios
-    private String estado;
+    private boolean disponible;
 
     public Habitacion() {
+        // Constructor vacío es útil si usas setters para construir el objeto
     }
 
-    public Habitacion(int habitacionID, String numero, String tipo, BigDecimal precioPorNoche, String estado) {
+    // Constructor con todos los campos
+    public Habitacion(int habitacionID, String numero, String tipo, BigDecimal precioPorNoche, boolean disponible) {
         this.habitacionID = habitacionID;
         this.numero = numero;
         this.tipo = tipo;
         this.precioPorNoche = precioPorNoche;
-        this.estado = estado;
+        this.disponible = disponible;
     }
 
     // --- Getters y Setters ---
@@ -52,16 +55,18 @@ public class Habitacion {
         this.precioPorNoche = precioPorNoche;
     }
 
-    public String getEstado() {
-        return estado;
+
+    public boolean isDisponible() {
+        return disponible;
     }
 
-    public void setEstado(String estado) {
-        this.estado = estado;
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
     }
 
     @Override
     public String toString() {
-        return "Habitación " + numero + " (" + tipo + ") - " + estado;
+        // Ajustar el toString para mostrar "Disponible" o "No disponible"
+        return "Habitación " + numero + " (" + tipo + ") - " + (disponible ? "Disponible" : "No disponible");
     }
 }
