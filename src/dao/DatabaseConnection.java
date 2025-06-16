@@ -3,6 +3,9 @@ package dao;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class DatabaseConnection {
 
@@ -38,6 +41,47 @@ public class DatabaseConnection {
             } catch (SQLException e) {
                 System.err.println("Error al cerrar la conexión a la base de datos: " + e.getMessage());
                 // Considera loguear el error o lanzarlo como una RuntimeException si es crítico
+            }
+        }
+    }
+    /**
+     * Cierra un Statement de forma segura.
+     * @param stmt El objeto Statement a cerrar.
+     */
+    public static void closeConnection(Statement stmt) {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                System.err.println("Error al cerrar Statement: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Cierra un PreparedStatement de forma segura.
+     * @param pstmt El objeto PreparedStatement a cerrar.
+     */
+    public static void closeConnection(PreparedStatement pstmt) {
+        if (pstmt != null) {
+            try {
+                pstmt.close();
+            } catch (SQLException e) {
+                System.err.println("Error al cerrar PreparedStatement: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Cierra un ResultSet de forma segura.
+     * @param rs El objeto ResultSet a cerrar.
+     */
+    public static void closeConnection(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                System.err.println("Error al cerrar ResultSet: " + e.getMessage());
             }
         }
     }
